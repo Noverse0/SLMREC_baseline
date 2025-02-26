@@ -29,7 +29,7 @@ cd AgenticMemory
 Option 1: Using venv (Python virtual environment)
 ```bash
 # Create and activate virtual environment
-python -m venv slmrec_env
+python3.10 -m venv slmrec_env
 source slmrec_env/bin/activate  # Linux/Mac
 slmrec_env\Scripts\activate     # Windows
 
@@ -69,9 +69,12 @@ python train_sr_trad.py
 python extract_emb.py
 ```
 
-3. Train a teacher model.
-```python
-python finetune.py
+3.1 Download pre-trained LLaMA model.
+
+
+3.2 Train a teacher model.
+```bash
+bash run_finetune.sh
 ```
 
 4. Train a student model via the knowledge distillation.
@@ -82,3 +85,18 @@ python distill.py
 ### Hyperparameters
 
 Please refer to the appendix in our paper.
+
+## Citation
+
+If you found the codes useful, please cite our paper.
+
+      @inproceedings{xu2025slmrec,
+      title = {SLMRec: Distilling Large Language Models into Small for Sequential Recommendation},
+      author = {Wujiang Xu, Qitian Wu, Zujie Liang, Jiaojiao Han, Xuying Ning, Yunxiao Shi, Wenfang Lin, Yongfeng Zhang},
+      booktitle = {International Conference on Learning Representations (ICLR 2025)},
+      year = {2025}
+      }
+
+
+## Contact us 
+Please feel free to contact us with the email to W. Xu "wujiang dot xu at rutgers dot edu" or "swustimp at gmail dot com".

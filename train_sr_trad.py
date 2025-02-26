@@ -73,14 +73,6 @@ def train(model,device,trainLoader,args,valLoader,testLoader):
     for epoch in range(args.epoch):
         stats = AverageMeter('train_loss','val_loss','test_loss')
         model.train()
-        def count_parameters(model):
-            return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
-        # 计算训练时使用的参数量
-        train_params = (count_parameters(model)) / 1e9  # 转换为B（十亿）
-        print("训练参数是:{}".format(train_params))
-        import time
-        start_time = time.time()
         for i,sample in enumerate(tqdm(trainLoader)):
 
             batch = tuple(t for t in sample)
@@ -106,8 +98,6 @@ def train(model,device,trainLoader,args,valLoader,testLoader):
             if i % 20 == 0:
                 logger.info(f'train total loss:{stats.train_loss} \t')
             #print("epoch :{} train loss:{}, auc:{}".format(epoch,stats.loss,stats.auc)) 
-        training_time = (time.time() - start_time) / 3600  # 转换为小时
-        print("训练时间:{}".format(training_time))
         val_loss, HIT_1, NDCG_1, HIT_5, NDCG_5, HIT_10, NDCG_10, MRR = test(model,args,valLoader)
         logger.info(f'Epoch: {epoch}/{args.epoch} \t'
                     f'val loss: {val_loss:.4f}\t'

@@ -5,13 +5,14 @@ import transformers
 from transformers import LlamaModel, LlamaForCausalLM, LlamaTokenizer
 from transformers.modeling_outputs import SequenceClassifierOutputWithPast
 import numpy as np
-# from peft import (
-#     LoraConfig,
-#     get_peft_model,
-#     prepare_model_for_int8_training,
-#     set_peft_model_state_dict
-# )
+from peft import (
+    LoraConfig,
+    get_peft_model,
+    prepare_model_for_int8_training,
+    set_peft_model_state_dict
+)
 import math
+import os
 
 class predictModule(nn.Module):
     def __init__(self, emb_dim, hid_dim):
@@ -259,12 +260,14 @@ class LLM4Rec(nn.Module):
             bias='none',
         )
 
-        self.llama_model = LlamaModel.from_pretrained("meta-llama/Llama-2-7b-hf", load_in_8bit=True, torch_dtype=torch.float16,
-                                              cache_dir=args['cache_dir'], device_map=self.args['device_map'])
-
-        # self.llama_model = LlamaModel.from_pretrained(self.args['base_model'], load_in_8bit=True, torch_dtype=torch.float16,
-        #                                               local_files_only=True, cache_dir=args['cache_dir'],
-        #                                               device_map=self.args['device_map'])
+        local_rank = int(os.environ.get("LOCAL_RANK", "0"))
+        self.llama_model = LlamaModel.from_pretrained(
+            "meta-llama/Llama-2-7b-hf",
+            load_in_8bit=True,
+            torch_dtype=torch.float16,
+            cache_dir=args['cache_dir'],
+            device_map={'': local_rank}
+        )
         if self.args['drop_type'] == "trune":
             self.llama_model.layers = nn.ModuleList(self.llama_model.layers[:self.args['llama_decoder_nums']])
         elif self.args['drop_type'] == "interval":
@@ -280,10 +283,7 @@ class LLM4Rec(nn.Module):
             self.llama_model = get_peft_model(self.llama_model, peft_config)
             self.llama_model.print_trainable_parameters()
         self.llama_model.config.use_cache = False
-        # self.llama_model.config.num_hidden_layers = 10
-        self.llama_model = LlamaModel.from_pretrained("meta-llama/Llama-2-7b-hf", load_in_8bit=True, torch_dtype=torch.float16,
-                                              cache_dir=args['cache_dir'], device_map=self.args['device_map'])
-        # self.llama_tokenizer = LlamaTokenizer.from_pretrained(self.args['base_model'], use_fast=False, local_files_only=True, cache_dir=args['cache_dir'])
+        self.llama_tokenizer = LlamaTokenizer.from_pretrained("meta-llama/Llama-2-7b-hf", use_fast=False, cache_dir=args['cache_dir'])
         self.llama_tokenizer.pad_token = 0
         self.llama_tokenizer.padding_side = "right"
         self.instruct_ids, self.instruct_mask = self.llama_tokenizer(self.args['instruction_text'][0],
