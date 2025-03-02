@@ -1,22 +1,17 @@
-# SLMRec
-The code for paper "SLMRec: Empowering Small Language Models for Sequential Recommendation".
-
 
 # SLMRec: Empowering Small Language Models for Sequential Recommendation
-This repo presents the implementation of the **SLMRec** 
+This repo presents the implementation of ICLR 2025 paper [**"SLMRec: Distilling Large Language Models into Small for Sequential Recommendation"**](https://openreview.net/forum?id=G4wARwjF8M "SLMRec")
 
-We present **Empowering Small Language Models for Sequential Recommendation**, abbreviated as **SLMRec**. This paper presents an initial attempt to reassess the need for LLMs in sequential recommendation.
 
 ## Key Features of SLMRec🔑
 
 - **Motivational Experiments**: To explore the reasons for the significant improvement of LLMRec methods, we conduct a series of experiments on large-scale industry datasets to investigate the effects of reducing the number of parameters during the training and inference stages on overall performance. From the empirical results, we found some profound insights that the improvement of the rise of the model parameters is not consistent. Meanwhile, it reveals that some layers of LLMs are redundant in the recommendation task.
 
-<div align=center><img src="pic/screenshot.jpg" width="100%" height="100%" /></div>
+<div align=center><img src="pic/screenshot.jpg" width="80%" height="80%" /></div>
 
 - **Simple but Effective Method**: Motivated by these findings, we empower small language models for the sequential recommendation, named SLMRec. We adopt the vanilla knowledge distillation approaches to align the representation knowledge. Moreover, multiple supervision signals are crafted to steer the student model toward acquiring task-aware knowledge within its hidden representations. Extensive experiments have shown that SLMRec, with a model size under 1 billion parameters, not only achieves performance comparable to baselines using LLMs with over 7 billion parameters but also delivers up to 6.6x faster training and 8.0x faster inference compared to LLM-based recommendation models.
 
-
-<div align=center><img src="pic/framework.jpg" width="100%" height="100%" /></div>
+<div align=center><img src="pic/framework.jpg" width="80%" height="80%" /></div>
 
 ## Getting Started 🚀
 
