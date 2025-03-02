@@ -33,6 +33,7 @@ class DistillationTrainingArguments(transformers.TrainingArguments):
         self.cls_multiple_lambda_student=cls_multiple_lambda_student
 
 class SLMTrainer(transformers.Trainer):
+
     def log(self, logs: Dict[str, float]) -> None:
         """
         Log `logs` on the various objects watching training.
@@ -49,11 +50,10 @@ class SLMTrainer(transformers.Trainer):
         output = {**logs, **{"step": self.state.global_step}}
         self.state.log_history.append(output)
         # save output
-        # 以追加模式打开文件，并将字符串追加到文件
         with open(os.path.join(self.args.output_dir,"log.txt"), 'a') as file:
             # print("logger output:{}".format(output))
             json.dump(output, file)
-            file.write('\n')  # 添加换行符
+            file.write('\n')
 
         self.control = self.callback_handler.on_log(self.args, self.state, self.control, logs)
 
@@ -118,24 +118,8 @@ class RecDistillationTrainer(DistillationTrainer,SLMTrainer):
                         if self.args.distill_type=="align": # block-wise alignment
                             for i in range(1,self.args.distill_block+1): # 1-4 block
                                 cosine_sim = F.cosine_similarity(student_hidden_states[(self.args.llama_decoder_nums_student//self.args.distill_block)*i][:,-1], teacher_output_states[(self.args.llama_decoder_nums_teacher//self.args.distill_block)*i][:,-1], dim=1)
-                                # 将相似度转换为损失
                                 l2_distance = torch.norm(student_hidden_states[(self.args.llama_decoder_nums_student//self.args.distill_block)*i][:,-1] - teacher_output_states[(self.args.llama_decoder_nums_teacher//self.args.distill_block)*i][:,-1], dim=1, p=2).mean()
-                                # print("l2_distance:{}".format(l2_distance))
                                 loss_distill = loss_distill + (1 - cosine_sim.mean()) * self.args.distill_lambda + l2_distance * 0.1
-                        # elif self.args.distill_type=="self":
-                        #     for i in range(1,self.args.llama_decoder_nums_student//2+1): # 1-4 block
-                        #         cosine_sim = F.cosine_similarity(student_hidden_states[i][:,-1], teacher_output_states[2*i][:,-1], dim=1)
-                        #         # 将相似度转换为损失
-                        #         loss_distill = loss_distill + (1 - cosine_sim.mean()) * self.args.distill_lambda
-                        # elif self.args.distill_type=="remove_last": # interval some layers to align except last hidden states
-                        #     # 待实现间隔多少层，目前是直接舍弃最后一层
-                        #     for i in range(1,self.args.llama_decoder_nums_student):
-                        #         map_nums = math.ceil(self.args.llama_decoder_nums_student / self.args.llama_decoder_nums_teacher)
-                        #         cosine_sim = F.cosine_similarity(student_hidden_states[i][:,-1], teacher_output_states[self.args.llama_decoder_nums_teacher-map_nums*(self.args.llama_decoder_nums_student-i-1)][:,-1], dim=1)
-                        #         # 将相似度转换为损失
-                        #         loss_distill = loss_distill + (1 - cosine_sim.mean()) * self.args.distill_lambda
-                        print("loss_distill:{}".format(loss_distill))
-                        # self.logger.info(f"  loss_distill: {loss_distill}")
                         loss_distill_dict = {"loss_distill":loss_distill.item()}
                         self.log(loss_distill_dict)
                     else:
@@ -162,33 +146,15 @@ class RecDistillationTrainer(DistillationTrainer,SLMTrainer):
                     teacher_output_states = outputs_student['teacher_output_states']
                     student_hidden_states = outputs_student['student_output_states']
 
-                    # assert size
-                    # assert outputs_student.logits.size() == outputs_teacher.logits.size()
                     loss_distill = 0
                     if self.args.kd_loss_type == "cosine":
                         if teacher_output_states is not None and student_hidden_states is not None:
                             if self.args.distill_type=="align": # block-wise alignment
                                 for i in range(1,self.args.distill_block+1): # 1-4 block
                                     cosine_sim = F.cosine_similarity(student_hidden_states[(self.args.llama_decoder_nums_student//self.args.distill_block)*i][:,-1], teacher_output_states[(self.args.llama_decoder_nums_teacher//self.args.distill_block)*i][:,-1], dim=1)
-                                    # 将相似度转换为损失
                                     l2_distance = torch.norm(student_hidden_states[(self.args.llama_decoder_nums_student//self.args.distill_block)*i][:,-1] - teacher_output_states[(self.args.llama_decoder_nums_teacher//self.args.distill_block)*i][:,-1], dim=1, p=2).mean()
-                                    # print("l2_distance:{}".format(l2_distance))
                                     loss_distill = loss_distill + (1 - cosine_sim.mean()) * self.args.distill_lambda + l2_distance * 0.1
-                                    # loss_distill = loss_distill + (1 - cosine_sim.mean()) * self.args.distill_lambda
-                            # elif self.args.distill_type=="self":
-                            #     for i in range(1,self.args.llama_decoder_nums_student//2+1): # 1-4 block
-                            #         cosine_sim = F.cosine_similarity(student_hidden_states[i][:,-1], teacher_output_states[2*i][:,-1], dim=1)
-                            #         # 将相似度转换为损失
-                            #         loss_distill = loss_distill + (1 - cosine_sim.mean()) * self.args.distill_lambda
-                            # elif self.args.distill_type=="remove_last": # interval some layers to align except last hidden states
-                            #     # 待实现间隔多少层，目前是直接舍弃最后一层
-                            #     for i in range(1,self.args.llama_decoder_nums_student):
-                            #         map_nums = math.ceil(self.args.llama_decoder_nums_student / self.args.llama_decoder_nums_teacher)
-                            #         cosine_sim = F.cosine_similarity(student_hidden_states[i][:,-1], teacher_output_states[self.args.llama_decoder_nums_teacher-map_nums*(self.args.llama_decoder_nums_student-i-1)][:,-1], dim=1)
-                            #         # 将相似度转换为损失
-                            #         loss_distill = loss_distill + (1 - cosine_sim.mean()) * self.args.distill_lambda
-                    
-                            # self.logger.info(f"  loss_distill: {loss_distill}")
+
                             loss_distill_dict = {"loss_distill":loss_distill.item()}
                             self.log(loss_distill_dict)
                         else:
@@ -197,17 +163,9 @@ class RecDistillationTrainer(DistillationTrainer,SLMTrainer):
                         for i in range(0,self.args.distill_block):
                             if outputs_student['logits_teacher'] is not None and outputs_student['logits_student'] is not None: 
                                 logits_teacher_tmp, logits_student_tmp = outputs_student['logits_teacher'][i], outputs_student['logits_student'][i] 
-                                # 教师logits通过softmax获取概率分布，并取对数
                                 teacher_probs = F.softmax(logits_teacher_tmp, dim=1)
-                                # teacher_probs_with_log = torch.log(teacher_probs + 1e-9)  # 防止log(0)，可以加一个小的epsilon
-
-                                # 学生logits直接传入KLDivLoss，因为PyTorch中的KLDivLoss预计第一个参数是对数形式
                                 student_probs_with_log = F.log_softmax(logits_student_tmp, dim=1)
-
-                                # 定义KL散度损失, reduction='batchmean'意味着要在批次中取平均
                                 kl_loss = torch.nn.KLDivLoss(reduction='batchmean')
-
-                                # 计算损失值
                                 loss_distill = loss_distill + kl_loss(student_probs_with_log, teacher_probs.detach()) * self.args.distill_lambda
                                 loss_distill_dict = {"loss_distill_kl":loss_distill.item()}
                                 self.log(loss_distill_dict)

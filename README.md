@@ -72,31 +72,47 @@ python extract_emb.py
 3.1 Download pre-trained LLaMA model.
 
 
-3.2 Train a teacher model.
+3.2 The teacher model can be trained using the provided script:
+
 ```bash
-bash run_finetune.sh
+# Make the script executable
+chmod +x run_finetune.sh
+
+# Run the script with your desired output directory
+bash run_finetune.sh /path/to/output/directory
+
+# Example:
+bash run_finetune.sh slmrec/cloth/teacher_model_decoder8/
 ```
 
-4. Train a student model via the knowledge distillation.
-```python
-python distill.py
+4. Train a student model via knowledge distillation
+The student model can be trained using the provided script:
+```bash
+chmod +x run_distill.sh
+
+# Run the script with the teacher checkpoint path and student output directory
+bash run_distill.sh <teacher_checkpoint_path> <output_directory>
+
+# Example:
+bash run_distill.sh slmrec/cloth/teacher_model_decoder8/checkpoint-1500/ slmrec/cloth/student_model_decoder4/
 ```
 
-### Hyperparameters
+For the specific hyperparameters, please refer to the appendix in our paper. Besides, for the server with different GPU, please change the learning rate and batch size in the script.
 
-Please refer to the appendix in our paper.
+**Note:** We have updated the experiment code from the paper to remove the 4-bit quantization implementation. This change was made because the original version had strict dependencies on specific CUDA and package versions, making it difficult to reproduce. The current implementation offers better compatibility while maintaining comparable performance.
 
-## Citation
+## Reference📚
 
 If you found the codes useful, please cite our paper.
 
       @inproceedings{xu2025slmrec,
-      title = {SLMRec: Distilling Large Language Models into Small for Sequential Recommendation},
-      author = {Wujiang Xu, Qitian Wu, Zujie Liang, Jiaojiao Han, Xuying Ning, Yunxiao Shi, Wenfang Lin, Yongfeng Zhang},
-      booktitle = {International Conference on Learning Representations (ICLR 2025)},
-      year = {2025}
+            title = {SLMRec: Distilling Large Language Models into Small for Sequential Recommendation},
+            author = {Wujiang Xu, Qitian Wu, Zujie Liang, Jiaojiao Han, Xuying Ning, Yunxiao Shi, Wenfang Lin, Yongfeng Zhang},
+            booktitle = {International Conference on Learning Representations (ICLR 2025)},
+            year = {2025}
       }
 
+Also, thanks to the [E4SRec](https://github.com/HestiaSky/E4SRec/) team for releasing their code.
 
 ## Contact us 
 Please feel free to contact us with the email to W. Xu "wujiang dot xu at rutgers dot edu" or "swustimp at gmail dot com".

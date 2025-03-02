@@ -10,10 +10,10 @@ import numpy as np
 import transformers
 from transformers import LlamaForCausalLM, LlamaTokenizer
 from utils.prompter import Prompter
-from model import LLM4Rec,LLM4RecText,LLM4RecDistill,LLM4RecTeacher,LLM4RecStudent
+from model import LLM4Rec,LLM4RecDistill,LLM4RecTeacher,LLM4RecStudent
 from utils.data_utils import *
 from utils.eval_utils import RecallPrecision_atK, MRR_atK, MAP_atK, NDCG_atK, AUC, getLabel, compute_metrics
-from utils.train_utils import CDRTrainer,RecDistillationTrainer,DistillationTrainingArguments
+from utils.train_utils import RecDistillationTrainer,DistillationTrainingArguments
 
 def train(
     # model/data params
@@ -162,10 +162,6 @@ def train(
     else:
         evaluation_strategy = "steps"
 
-    # if torch.__version__ >= "2" and sys.platform != "win32":
-    #     model = torch.compile(model)
-    # print(eval_dataset)
-    # trainer.evaluate(eval_dataset=eval_dataset)
     if distill_type_standard=="offline":
         model_teacher =  LLM4RecTeacher(
             base_model=base_model,
@@ -348,25 +344,7 @@ def train(
             data_collator=data_collator,
             compute_metrics = compute_metrics,
         )
-    # if distill_type=="self":
-    #     trainer._load_from_checkpoint(teacher_resume_from_checkpoint)
-    # def print_attributes(obj):
-    #     for attribute_name in dir(obj):
-    #         if not attribute_name.startswith('__'):
-    #             attribute_value = getattr(obj, attribute_name)
-    #             print(f"{attribute_name}: {attribute_value}")
 
-    # 打印model的所有属性
-    # print("model的属性:")
-    # print_attributes(trainer.model.llama_model)
-    # print(hasattr(trainer.model.llama_model, "active_adapter"))
-    # print(hasattr(trainer.model.llama_model, "load_adapter"))
-    # if hasattr(model, "base_model") and getattr(model.base_model, "is_8bit_serializable", False):
-    # print()model_student 
-    # print("llama_model model:{}".format(hasattr(trainer.model, "llama_model")))    
-    # print("base_model :{}".format(hasattr(trainer.model.llama_model, "base_model")))    
-    # print("8bit :{}".format(getattr(trainer.model.llama_model.base_model, "is_8bit_serializable", False)))  
-    # print(trainer.state.best_model_checkpoint)  
     if train_eval_type=="train":
         # trainer._load_from_checkpoint(student_resume_from_checkpoint)
         trainer.train()
@@ -562,7 +540,6 @@ def train(
             )
         trainer._load_from_checkpoint(best_checkpoint_path)    
     pred_out = trainer.predict(test_dataset=datasetTest)
-    # 可以这样访问 metrics 字典
     output_data = {}
     if pred_out.metrics is not None:
         for metric_name, metric_value in pred_out.metrics.items():
@@ -572,18 +549,6 @@ def train(
     # Write the output data to a file
     with open(os.path.join(output_dir,"log.txt"), 'a') as file:
         json.dump(output_data, file)
-    # train postprocess load best result
-    # clean
-
-    # model.llama_model.save_pretrained(output_dir)
-    # model_path = os.path.join(output_dir, "adapter.pth")
-    # if task_type == 'general':
-    #     user_proj, input_proj, score = model.user_proj.state_dict(), model.input_proj.state_dict(), model.score.state_dict()
-    #     torch.save({'user_proj': user_proj, 'input_proj': input_proj, 'score': score}, model_path)
-    # elif task_type == 'sequential':
-    #     input_proj, score = model.input_proj.state_dict(), model.score.state_dict()
-    #     torch.save({'input_proj': input_proj, 'score': score}, model_path)
-
 
 if __name__ == "__main__":
     torch.cuda.empty_cache() 
