@@ -195,7 +195,7 @@ def train(
         data_collator=data_collator,
         compute_metrics = compute_metrics,
     )
-
+    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
     best_checkpoint_path = trainer.state.best_model_checkpoint
     model = LLM4Rec(
         base_model=base_model,
