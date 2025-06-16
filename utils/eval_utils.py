@@ -1,65 +1,27 @@
-"""
-Evaluation metrics for sequential recommendation.
-This module contains implementations of common metrics used in recommendation systems:
-- Recall and Precision@K
-- Mean Reciprocal Rank (MRR)@K
-- Mean Average Precision (MAP)@K
-- Normalized Discounted Cumulative Gain (NDCG)@K
-- Area Under the ROC Curve (AUC)
-"""
-
 import pandas as pd
 import torch
 import numpy as np
 from sklearn.metrics import roc_auc_score
 import torch.nn as nn
 
+# ====================Metrics==============================
 def RecallPrecision_atK(test, r, k):
-    """Calculate Recall and Precision at K.
-    
-    Args:
-        test: Ground truth items for each user
-        r: Binary relevance matrix
-        k: Number of items to consider
-        
-    Returns:
-        precision: Precision@K
-        recall: Recall@K
-    """
     tp = r[:, :k].sum(1)
     precision = np.sum(tp) / k
     recall_n = np.array([len(test[i]) for i in range(len(test))])
     recall = np.sum(tp / recall_n)
     return precision, recall
 
+
 def MRR_atK(test, r, k):
-    """Calculate Mean Reciprocal Rank at K.
-    
-    Args:
-        test: Ground truth items for each user
-        r: Binary relevance matrix
-        k: Number of items to consider
-        
-    Returns:
-        MRR: Mean Reciprocal Rank@K
-    """
     pred = r[:, :k]
     weight = np.arange(1, k+1)
     MRR = np.sum(pred / weight, axis=1) / np.array([len(test[i]) if len(test[i]) <= k else k for i in range(len(test))])
     MRR = np.sum(MRR)
     return MRR
 
+
 def MAP_atK(test, r, k):
-    """Calculate Mean Average Precision at K.
-    
-    Args:
-        test: Ground truth items for each user
-        r: Binary relevance matrix
-        k: Number of items to consider
-        
-    Returns:
-        MAP: Mean Average Precision@K
-    """
     pred = r[:, :k]
     rank = pred.copy()
     for i in range(k):
@@ -67,89 +29,44 @@ def MAP_atK(test, r, k):
     weight = np.arange(1, k+1)
     AP = np.sum(pred * rank / weight, axis=1)
     AP = AP / np.array([len(test[i]) if len(test[i]) <= k else k for i in range(len(test))])
-    return np.sum(AP)
+    MAP = np.sum(AP)
+    return MAP
+
 
 def NDCG_atK(test, r, k):
-    """Calculate Normalized Discounted Cumulative Gain at K.
-    
-    Args:
-        test: Ground truth items for each user
-        r: Binary relevance matrix
-        k: Number of items to consider
-        
-    Returns:
-        NDCG: Normalized Discounted Cumulative Gain@K
-    """
-    test_matrix = np.zeros((len(test), k))
+    pred = r[:, :k]
+    test_mat = np.zeros((len(pred), k))
     for i, items in enumerate(test):
         length = k if k <= len(items) else len(items)
-        test_matrix[i, :length] = 1
-    max_r = test_matrix
-    idcg = np.sum(max_r * 1./np.log2(np.arange(2, k + 2)), axis=1)
-    dcg = r * (1./np.log2(np.arange(2, k + 2)))
-    dcg = np.sum(dcg, axis=1)
+        test_mat[i, :length] = 1
+
+    idcg = np.sum(test_mat * (1. / np.log2(np.arange(2, k + 2))), axis=1)
     idcg[idcg == 0.] = 1.
+    dcg = pred * (1. / np.log2(np.arange(2, k + 2)))
+    dcg = np.sum(dcg, axis=1)
     ndcg = dcg/idcg
     ndcg[np.isnan(ndcg)] = 0.
-    return np.sum(ndcg)
+    ndcg = np.sum(ndcg)
+    return ndcg
+
 
 def AUC(all_item_scores, dataset, test):
-    """Calculate Area Under the ROC Curve.
-    
-    Args:
-        all_item_scores: Predicted scores for all items
-        dataset: Complete dataset
-        test: Ground truth items
-        
-    Returns:
-        auc: Area Under the ROC Curve
-    """
-    r = getLabel(test, dataset)
-    r = r.flatten()
-    all_item_scores = all_item_scores.flatten()
-    return roc_auc_score(r, all_item_scores)
+    r_all = np.zeros((dataset.m_item, ))
+    r_all[test] = 1
+    r = r_all[all_item_scores >= 0]
+    test_item_scores = all_item_scores[all_item_scores >= 0]
+    return roc_auc_score(r, test_item_scores)
+
 
 def getLabel(test, pred):
-    """Convert test and predictions to binary relevance matrix.
-    
-    Args:
-        test: Ground truth items
-        pred: Predicted items
-        
-    Returns:
-        Binary relevance matrix
-    """
     r = []
     for i in range(len(test)):
-        groundTrue = test[i]
-        predictTopK = pred[i]
-        pred_list = list(map(lambda x: x in groundTrue, predictTopK))
-        pred_list = np.array(pred_list).astype("float")
-        r.append(pred_list)
+        groundTruth, predTopK = test[i], pred[i]
+        hits = list(map(lambda x: x in groundTruth, predTopK))
+        hits = np.array(hits).astype("float")
+        r.append(hits)
     return np.array(r).astype('float')
-
-def compute_metrics(pred):
-    """Compute all evaluation metrics for a prediction.
-    
-    Args:
-        pred: Prediction object containing logits and labels
-        
-    Returns:
-        Dictionary of computed metrics
-    """
-    logits = pred.predictions
-    labels = pred.label_ids[0]
-    metrics = {}
-    
-    # Calculate metrics at different K values
-    for k in [1, 5, 10]:
-        r = getLabel(labels, logits)
-        metrics[f'ndcg_{k}'] = NDCG_atK(labels, r, k)
-        metrics[f'hit_{k}'] = RecallPrecision_atK(labels, r, k)[1]
-    
-    metrics['mrr'] = MRR_atK(labels, r, 10)
-    return metrics
-
+# ====================end Metrics=============================
 def get_sample_scores(pred_list):
     pred_list = (-pred_list).argsort().argsort()[:, 0]
     HIT_1, NDCG_1, MRR = get_metric(pred_list, 1)
@@ -204,6 +121,22 @@ def choose_predict_overlap(predict_d1,predict_d2,domain_id,overlap_label):
     if len(predict_d2_cse_nono)!=0:
         predict_d2_cse_nono = np.array(predict_d2_cse_nono)
     return predict_d1_cse_over, predict_d1_cse_nono, predict_d2_cse_over, predict_d2_cse_nono
+
+def compute_metrics(pred):
+    logits = pred.predictions 
+    # print("logits shape:{}".format(logits.shape))
+    if np.any(np.isnan(logits)) or np.any(np.isinf(logits)):
+        HIT_1, NDCG_1, HIT_5, NDCG_5, HIT_10, NDCG_10, MRR = -1, -1, -1, -1, -1, -1, -1
+    else:
+        HIT_1, NDCG_1, HIT_5, NDCG_5, HIT_10, NDCG_10, MRR = get_sample_scores(logits)
+    return {
+        'hit@1':HIT_1,
+        'hit@5':HIT_5,
+        'ndcg@5':NDCG_5,
+        'hit@10':HIT_10,
+        'ndcg@10':NDCG_10,
+        'mrr':MRR,
+    }
 
 def compute_metrics_multiple(pred):
     logits = pred.predictions 
