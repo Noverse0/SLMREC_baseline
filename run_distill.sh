@@ -11,12 +11,12 @@ if [ -z "$TEACHER_CHECKPOINT" ] || [ -z "$OUTPUT_DIR" ]; then
   exit 1
 fi
 
-# Run the command with the provided parameters
-NCCL_P2P_DISABLE=1 CUDA_LAUNCH_BLOCKING=1 torchrun --nproc_per_node=8 --master_port=1234 distill.py \
+# Run the command with the provided parameters (4 GPUs)
+NCCL_P2P_DISABLE=1 CUDA_LAUNCH_BLOCKING=1 torchrun --nproc_per_node=4 --master_port=1234 distill.py \
     --task_type sequential \
-    --cache_dir cace_dir/ \
+    --cache_dir cache_dir/ \
     --output_dir "$OUTPUT_DIR" \
-    --batch_size 256 \
+    --batch_size 128 \
     --micro_batch_size 32 \
     --num_epochs 5 \
     --learning_rate 0.001 \

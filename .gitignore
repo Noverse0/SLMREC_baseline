@@ -1,0 +1,8 @@
+cache_dir/
+dataset/
+model/
+output/
+logs/
+slmrec_env/
+slmrec/
+_pycache_/

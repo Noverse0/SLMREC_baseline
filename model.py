@@ -204,7 +204,8 @@ class LLM4Rec(nn.Module):
         # Remove 8-bit quantization, use float16 instead
         self.llama_model = LlamaModel.from_pretrained(
             "meta-llama/Llama-2-7b-hf",
-            torch_dtype=torch.float16,
+            # torch_dtype=torch.float16,
+            torch_dtype=torch.bfloat16,
             cache_dir=args['cache_dir'],
             device_map=self.args['device_map']
         )

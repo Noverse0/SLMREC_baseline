@@ -34,7 +34,7 @@ class DistillationTrainingArguments(transformers.TrainingArguments):
 
 class SLMTrainer(transformers.Trainer):
 
-    def log(self, logs: Dict[str, float]) -> None:
+    def log(self, logs: Dict[str, float], start_time=None) -> None:
         """
         Log `logs` on the various objects watching training.
 
@@ -43,6 +43,8 @@ class SLMTrainer(transformers.Trainer):
         Args:
             logs (`Dict[str, float]`):
                 The values to log.
+            start_time (optional):
+                Start time for timing information (compatibility with parent class).
         """
         if self.state.epoch is not None:
             logs["epoch"] = round(self.state.epoch, 2)
