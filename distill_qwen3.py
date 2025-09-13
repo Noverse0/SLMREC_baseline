@@ -14,7 +14,7 @@ from utils.prompter import Prompter
 from model_qwen3 import LLM4RecQwen3, LLM4RecQwen3Teacher, LLM4RecQwen3Student, LLM4RecQwen3Distill
 from utils.data_utils import *
 from utils.eval_utils import RecallPrecision_atK, MRR_atK, MAP_atK, NDCG_atK, AUC, getLabel, compute_metrics
-from utils.train_utils import RecDistillationTrainer, DistillationTrainingArguments
+from utils.train_qwen_utils import RecDistillationTrainer, DistillationTrainingArguments
 
 def train(
     # model/data params
@@ -44,7 +44,7 @@ def train(
     lora_alpha: int = 16,
     lora_dropout: float = 0.05,
     # Qwen3 target modules for LoRA
-    lora_target_modules: List[str] = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "down_proj", "up_proj"],
+    lora_target_modules: List[str] = ["gate_proj", "down_proj", "up_proj"],
     # llm hyperparams
     train_on_inputs: bool = False,
     add_eos_token: bool = False,
@@ -156,9 +156,9 @@ def train(
     else:
         save_strategy = "steps"
     if eval_steps < 0:
-        evaluation_strategy = "epoch"
+        eval_strategy = "epoch"
     else:
-        evaluation_strategy = "steps"
+        eval_strategy = "steps"
 
     if distill_type_standard == "offline":
         # Offline distillation: separate teacher and student models
@@ -228,7 +228,7 @@ def train(
                 max_grad_norm=1.0,
                 weight_decay=0.01,
                 metric_for_best_model="mrr",
-                evaluation_strategy=evaluation_strategy,
+                eval_strategy=eval_strategy,
                 save_strategy=save_strategy,
                 max_steps=max_steps,
                 eval_steps=eval_steps,
@@ -250,11 +250,6 @@ def train(
                 is_cls_multiple=is_cls_multiple,
                 cls_multiple_lambda=cls_multiple_lambda,
                 kd_loss_type=kd_loss_type,
-                # Single GPU settings
-                local_rank=-1,
-                ddp_find_unused_parameters=False,
-                dataloader_drop_last=False,
-                dataloader_pin_memory=False,
             ),
             data_collator=data_collator,
             compute_metrics=compute_metrics,
@@ -316,7 +311,7 @@ def train(
                 max_grad_norm=1.0,
                 weight_decay=0.01,
                 metric_for_best_model="mrr",
-                evaluation_strategy=evaluation_strategy,
+                eval_strategy=eval_strategy,
                 save_strategy=save_strategy,
                 max_steps=max_steps,
                 eval_steps=eval_steps,
@@ -342,11 +337,6 @@ def train(
                 kd_loss_type=kd_loss_type,
                 cls_multiple_lambda_teacher=cls_multiple_lambda_teacher,
                 cls_multiple_lambda_student=cls_multiple_lambda_student,
-                # Single GPU settings
-                local_rank=-1,
-                ddp_find_unused_parameters=False,
-                dataloader_drop_last=False,
-                dataloader_pin_memory=False,
             ),
             data_collator=data_collator,
             compute_metrics=compute_metrics,
@@ -360,6 +350,7 @@ def train(
     elif train_eval_type == "eval":
         if student_resume_from_checkpoint:
             trainer._load_from_checkpoint(student_resume_from_checkpoint)
+
 
     if train_eval_type == "train":
         # Reload the model and path for evaluation
@@ -430,7 +421,7 @@ def train(
                     max_grad_norm=1.0,
                     weight_decay=0.01,
                     metric_for_best_model="mrr",
-                    evaluation_strategy=evaluation_strategy,
+                    eval_strategy=eval_strategy,
                     save_strategy=save_strategy,
                     eval_steps=eval_steps,
                     save_steps=save_steps,
@@ -452,11 +443,6 @@ def train(
                     is_cls_multiple=is_cls_multiple,
                     cls_multiple_lambda=cls_multiple_lambda,
                     kd_loss_type=kd_loss_type,
-                    # Single GPU settings
-                    local_rank=-1,
-                    ddp_find_unused_parameters=False,
-                    dataloader_drop_last=False,
-                    dataloader_pin_memory=False,
                 ),
                 data_collator=data_collator,
                 compute_metrics=compute_metrics,
@@ -516,7 +502,7 @@ def train(
                     max_grad_norm=1.0,
                     weight_decay=0.01,
                     metric_for_best_model="mrr",
-                    evaluation_strategy=evaluation_strategy,
+                    eval_strategy=eval_strategy,
                     save_strategy=save_strategy,
                     eval_steps=eval_steps,
                     save_steps=save_steps,
@@ -542,11 +528,6 @@ def train(
                     kd_loss_type=kd_loss_type,
                     cls_multiple_lambda_teacher=cls_multiple_lambda_teacher,
                     cls_multiple_lambda_student=cls_multiple_lambda_student,
-                    # Single GPU settings
-                    local_rank=-1,
-                    ddp_find_unused_parameters=False,
-                    dataloader_drop_last=False,
-                    dataloader_pin_memory=False,
                 ),
                 data_collator=data_collator,
                 compute_metrics=compute_metrics,

@@ -117,7 +117,7 @@ def train(
     # Load item embeddings
     # choose from cloths and movies
     # item_embed = pickle.load(open('./sasrec_cloths/sasrec_item.pkl', 'rb'))['item_embedding']
-    item_embed = pickle.load(open('./output/music.pkl', 'rb'))['item_embedding']
+    item_embed = pickle.load(open(f'./output/{domain_type}.pkl', 'rb'))['item_embedding']
             
     # Initialize Qwen3-based model with float16 precision
     model = LLM4RecQwen3(
@@ -277,7 +277,7 @@ def train(
         push_to_hub=False,
     )
     
-    trainer = CompatibleSLMTrainer(
+    trainer = SLMTrainer(
         model=model,
         train_dataset=datasetTrain,
         eval_dataset=datasetVal,

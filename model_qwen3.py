@@ -377,6 +377,11 @@ class LLM4RecQwen3Student(LLM4RecQwen3):
         self.distill_block = args['distill_block']
         self.is_cls_multiple = args['is_cls_multiple']
         self.down_layer_list = nn.ModuleList()
+
+        self._keys_to_ignore_on_save = None
+        self._keys_to_ignore_on_load_missing = None
+        self._keys_to_ignore_on_load_unexpected = None
+        
         if self.is_cls_multiple:
             for _ in range(self.distill_block-1):
                 self.down_layer_list.append(nn.Linear(self.qwen_model.config.hidden_size, self.input_dim, bias=False))
@@ -465,6 +470,11 @@ class LLM4RecQwen3Student(LLM4RecQwen3):
         self.distill_block = args['distill_block']
         self.is_cls_multiple = args['is_cls_multiple']
         self.down_layer_list = nn.ModuleList()
+
+        self._keys_to_ignore_on_save = None
+        self._keys_to_ignore_on_load_missing = None
+        self._keys_to_ignore_on_load_unexpected = None
+
         if self.is_cls_multiple:
             for _ in range(self.distill_block-1):
                 self.down_layer_list.append(nn.Linear(self.qwen_model.config.hidden_size, self.input_dim, bias=False).to(torch.bfloat16))

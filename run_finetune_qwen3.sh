@@ -37,7 +37,7 @@ python finetune_qwen3.py \
     --lora_r 16 \
     --lora_alpha 16 \
     --lora_dropout 0.05 \
-    --lora_target_modules '["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "down_proj", "up_proj"]' \
+    --lora_target_modules '["gate_proj", "down_proj", "up_proj"]' \
     --train_on_inputs False \
     --add_eos_token False \
     --group_by_length False \
@@ -47,6 +47,6 @@ python finetune_qwen3.py \
     --qwen_decoder_nums 8 \
     --save_steps 100 \
     --eval_steps 100 \
-    --domain_type music
+    --domain_type toys
 
 echo "Qwen3-14B training completed!" 
