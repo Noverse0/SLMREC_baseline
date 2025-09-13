@@ -64,7 +64,7 @@ python finetune_qwen3.py \
 ## 주요 매개변수
 
 ### Qwen3 전용 매개변수
-- `--base_model`: `"Qwen/Qwen2.5-7B"` (기본값)
+- `--base_model`: `"Qwen/Qwen3-7B"` (기본값)
 - `--qwen_decoder_nums`: Qwen3 디코더 레이어 수 (기본값: 32)
 - `--lora_target_modules`: Qwen3에 맞는 LoRA 타겟 모듈들
 
